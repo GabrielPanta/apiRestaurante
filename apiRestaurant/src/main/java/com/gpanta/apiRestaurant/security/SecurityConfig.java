@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .requestMatchers("/mozo/**").hasRole("MOZO")
                 .requestMatchers("/cocina/**").hasRole("COCINA")
                 .requestMatchers("/cajero/**").hasRole("CAJERO")
+                .requestMatchers("/pedidos/**").hasAnyRole("MOZO","COCINA","CAJERO","ADMIN")
                 .anyRequest().authenticated()
             );
 

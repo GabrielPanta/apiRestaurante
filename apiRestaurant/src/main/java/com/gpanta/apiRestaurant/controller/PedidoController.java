@@ -1,0 +1,38 @@
+package com.gpanta.apiRestaurant.controller;
+
+import com.gpanta.apiRestaurant.dto.CrearPedidoRequest;
+import com.gpanta.apiRestaurant.model.Pedido;
+import com.gpanta.apiRestaurant.service.PedidoService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/pedidos")
+public class PedidoController {
+
+    @Autowired
+    private PedidoService pedidoService;
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('MOZO','ADMIN')")
+    public Pedido crear(@RequestBody CrearPedidoRequest request) {
+        return pedidoService.crearPedido(request);
+    }
+
+    @GetMapping("/cocina")
+    @PreAuthorize("hasRole('COCINA')")
+    public List<Pedido> pedidosCocina() {
+        return pedidoService.pedidosPorEstado("EN_PREPARACION");
+    }
+
+    @PutMapping("/{id}/estado")
+    @PreAuthorize("hasAnyRole('COCINA','CAJERO')")
+    public Pedido cambiarEstado(@PathVariable Long id,
+                                @RequestParam String estado) {
+        return pedidoService.cambiarEstado(id, estado);
+    }
+}
+
