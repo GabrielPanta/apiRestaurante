@@ -15,8 +15,8 @@ public class MesaService  {
     private MesaRepository mesaRepository;
 
     public Mesa crear(Mesa mesa) {
-        
-        if(mesaRepository.existsByNumero(mesa.getNumero())) {
+
+        if (mesaRepository.existsByNumero(mesa.getNumero())) {
 
             throw new RuntimeException("Número de mesa ya existe");
         }
@@ -34,6 +34,14 @@ public class MesaService  {
         mesa.setEstado(estado);
         return mesaRepository.save(mesa);
     }
+
+    public void eliminar(Long id) {
+        if (!mesaRepository.existsById(id)) {
+            throw new RuntimeException("La mesa no existe");
+        }
+        mesaRepository.deleteById(id);
+    }
+
 
 
 }
