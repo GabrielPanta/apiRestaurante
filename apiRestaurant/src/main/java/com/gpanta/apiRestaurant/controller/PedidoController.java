@@ -34,5 +34,12 @@ public class PedidoController {
                                 @RequestParam String estado) {
         return pedidoService.cambiarEstado(id, estado);
     }
+
+    @GetMapping("/mesa/{mesaId}/activo")
+    @PreAuthorize("hasAnyRole('MOZO','ADMIN')")
+    public Pedido pedidoActivo(@PathVariable Long mesaId) {
+        return pedidoService.pedidoActivoPorMesa(mesaId);
+    }
+
 }
 

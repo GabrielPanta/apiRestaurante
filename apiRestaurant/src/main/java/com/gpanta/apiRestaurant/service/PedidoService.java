@@ -76,5 +76,16 @@ public class PedidoService {
         pedido.setEstado(estado);
         return pedidoRepository.save(pedido);
     }
+
+    public Pedido pedidoActivoPorMesa(Long mesaId) {
+        List<String> estadosActivos = List.of("PENDIENTE", "EN_PREPARACION", "LISTO");
+
+        return pedidoRepository
+                .findByMesaIdAndEstadoIn(mesaId, estadosActivos)
+                .stream()
+                .findFirst()
+                .orElse(null);
+    }
+
 }
 
