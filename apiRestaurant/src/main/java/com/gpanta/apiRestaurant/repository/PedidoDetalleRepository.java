@@ -8,4 +8,5 @@ import com.gpanta.apiRestaurant.model.PedidoDetalle;
 
 public interface PedidoDetalleRepository extends JpaRepository<PedidoDetalle, Long> {
     List<PedidoDetalle> findByPedidoId(Long pedidoId);
+    
 }

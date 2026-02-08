@@ -87,5 +87,40 @@ public class PedidoService {
                 .orElse(null);
     }
 
+    public Pedido agregarItem(Long pedidoId, ItemPedidoDTO dto) {
+
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+
+        MenuItem menu = menuItemRepository.findById(dto.getMenuItemId())
+                .orElseThrow(() -> new RuntimeException("Plato no encontrado"));
+
+        PedidoDetalle detalle = new PedidoDetalle();
+        detalle.setPedido(pedido);
+        detalle.setMenuItem(menu);
+        detalle.setCantidad(dto.getCantidad());
+        detalle.setPrecio(menu.getPrecio());
+
+        detalleRepository.save(detalle);
+
+        double nuevoTotal = pedido.getTotal() + (menu.getPrecio() * dto.getCantidad());
+        pedido.setTotal(nuevoTotal);
+
+        return pedidoRepository.save(pedido);
+    }
+
+
+    public List<ItemPedidoDTO> listarPorPedido(Long pedidoId) {
+        return detalleRepository.findByPedidoId(pedidoId)
+                .stream()
+                .map(detalle -> {
+                    ItemPedidoDTO dto = new ItemPedidoDTO();
+                    dto.setMenuItemId(detalle.getMenuItem().getId());
+                    dto.setCantidad(detalle.getCantidad());
+                    return dto;
+                })
+                .toList();  
+    }
+
 }
 

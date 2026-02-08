@@ -1,7 +1,10 @@
 package com.gpanta.apiRestaurant.controller;
 
 import com.gpanta.apiRestaurant.dto.CrearPedidoRequest;
+import com.gpanta.apiRestaurant.dto.ItemPedidoDTO;
 import com.gpanta.apiRestaurant.model.Pedido;
+import com.gpanta.apiRestaurant.model.PedidoDetalle;
+import com.gpanta.apiRestaurant.repository.PedidoDetalleRepository;
 import com.gpanta.apiRestaurant.service.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,8 +16,14 @@ import java.util.List;
 @RequestMapping("/pedidos")
 public class PedidoController {
 
+    private final PedidoDetalleRepository pedidoDetalleRepository;
+
     @Autowired
     private PedidoService pedidoService;
+
+    PedidoController(PedidoDetalleRepository pedidoDetalleRepository) {
+        this.pedidoDetalleRepository = pedidoDetalleRepository;
+    }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('MOZO','ADMIN')")
@@ -40,6 +49,23 @@ public class PedidoController {
     public Pedido pedidoActivo(@PathVariable Long mesaId) {
         return pedidoService.pedidoActivoPorMesa(mesaId);
     }
+
+    @PostMapping("/{pedidoId}/items")
+    @PreAuthorize("hasAnyRole('MOZO','ADMIN')")
+    public Pedido agregarItem(
+            @PathVariable Long pedidoId,
+            @RequestBody ItemPedidoDTO dto) {
+
+        return pedidoService.agregarItem(pedidoId, dto);
+    }
+
+    @GetMapping("/{pedidoId}/items")
+    public List<PedidoDetalle> listarItems(@PathVariable Long pedidoId) {
+        return pedidoDetalleRepository.findByPedidoId(pedidoId);
+    }
+
+
+
 
 }
 
