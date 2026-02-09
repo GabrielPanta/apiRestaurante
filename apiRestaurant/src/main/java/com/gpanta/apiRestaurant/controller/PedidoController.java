@@ -66,6 +66,11 @@ public class PedidoController {
         return pedidoDetalleRepository.findByPedidoId(pedidoId);
     }
 
+    @GetMapping("/{pedidoId}/detalles")
+    @PreAuthorize("hasAnyRole('COCINA','ADMIN')")
+    public List<PedidoDetalle> detalles(@PathVariable Long pedidoId) {
+        return pedidoDetalleRepository.findByPedidoId(pedidoId);
+    }
 
 
 
