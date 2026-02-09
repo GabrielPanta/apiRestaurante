@@ -54,10 +54,12 @@ public class PedidoController {
     @PreAuthorize("hasAnyRole('MOZO','ADMIN')")
     public Pedido agregarItem(
             @PathVariable Long pedidoId,
-            @RequestBody ItemPedidoDTO dto) {
+            @RequestParam Long menuItemId,
+            @RequestParam int cantidad) {
 
-        return pedidoService.agregarItem(pedidoId, dto);
+        return pedidoService.agregarItem(pedidoId, menuItemId, cantidad);
     }
+
 
     @GetMapping("/{pedidoId}/items")
     public List<PedidoDetalle> listarItems(@PathVariable Long pedidoId) {

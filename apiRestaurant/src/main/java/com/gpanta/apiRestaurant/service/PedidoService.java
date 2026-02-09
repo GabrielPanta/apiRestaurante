@@ -10,6 +10,9 @@ import com.gpanta.apiRestaurant.repository.MenuItemRepository;
 import com.gpanta.apiRestaurant.repository.MesaRepository;
 import com.gpanta.apiRestaurant.repository.PedidoDetalleRepository;
 import com.gpanta.apiRestaurant.repository.PedidoRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -87,7 +90,7 @@ public class PedidoService {
                 .orElse(null);
     }
 
-    public Pedido agregarItem(Long pedidoId, ItemPedidoDTO dto) {
+   /*  public Pedido agregarItem(Long pedidoId, ItemPedidoDTO dto) {
 
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
@@ -107,7 +110,54 @@ public class PedidoService {
         pedido.setTotal(nuevoTotal);
 
         return pedidoRepository.save(pedido);
-    }
+    }*/
+
+
+   @Transactional
+   public Pedido agregarItem(Long pedidoId, Long menuItemId, int cantidad) {
+
+       Pedido pedido = pedidoRepository.findById(pedidoId)
+               .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+
+       MenuItem menu = menuItemRepository.findById(menuItemId)
+               .orElseThrow(() -> new RuntimeException("Plato no encontrado"));
+
+       PedidoDetalle detalle = detalleRepository
+               .findByPedidoIdAndMenuItemId(pedidoId, menuItemId)
+               .orElse(null);
+
+       if (detalle == null) {
+           detalle = new PedidoDetalle();
+           detalle.setPedido(pedido);
+           detalle.setMenuItem(menu);
+           detalle.setCantidad(cantidad);
+           detalle.setPrecio(menu.getPrecio());
+       } else {
+           detalle.setCantidad(detalle.getCantidad() + cantidad);
+       }
+
+       if (detalle.getCantidad() <= 0) {
+           detalleRepository.delete(detalle);
+       } else {
+           detalleRepository.save(detalle);
+       }
+
+       recalcularTotal(pedido);
+
+       return pedido;
+   }
+
+   private void recalcularTotal(Pedido pedido) {
+       List<PedidoDetalle> items = detalleRepository.findByPedidoId(pedido.getId());
+
+       double total = items.stream()
+               .mapToDouble(i -> i.getPrecio() * i.getCantidad())
+               .sum();
+
+       pedido.setTotal(total);
+       pedidoRepository.save(pedido);
+   }
+
 
 
     public List<ItemPedidoDTO> listarPorPedido(Long pedidoId) {
