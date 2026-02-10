@@ -90,29 +90,7 @@ public class PedidoService {
                 .orElse(null);
     }
 
-   /*  public Pedido agregarItem(Long pedidoId, ItemPedidoDTO dto) {
-
-        Pedido pedido = pedidoRepository.findById(pedidoId)
-                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
-
-        MenuItem menu = menuItemRepository.findById(dto.getMenuItemId())
-                .orElseThrow(() -> new RuntimeException("Plato no encontrado"));
-
-        PedidoDetalle detalle = new PedidoDetalle();
-        detalle.setPedido(pedido);
-        detalle.setMenuItem(menu);
-        detalle.setCantidad(dto.getCantidad());
-        detalle.setPrecio(menu.getPrecio());
-
-        detalleRepository.save(detalle);
-
-        double nuevoTotal = pedido.getTotal() + (menu.getPrecio() * dto.getCantidad());
-        pedido.setTotal(nuevoTotal);
-
-        return pedidoRepository.save(pedido);
-    }*/
-
-
+ 
    @Transactional
    public Pedido agregarItem(Long pedidoId, Long menuItemId, int cantidad) {
 
@@ -171,6 +149,26 @@ public class PedidoService {
                 })
                 .toList();  
     }
+
+    @Transactional
+    public Pedido cerrarPedido(Long pedidoId) {
+
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+
+        if ("CERRADO".equals(pedido.getEstado())) {
+            throw new RuntimeException("El pedido ya está cerrado");
+        }
+
+        pedido.setEstado("CERRADO");
+
+        Mesa mesa = pedido.getMesa();
+        mesa.setEstado("LIBRE");
+        mesaRepository.save(mesa);
+
+        return pedidoRepository.save(pedido);
+    }
+
 
 }
 

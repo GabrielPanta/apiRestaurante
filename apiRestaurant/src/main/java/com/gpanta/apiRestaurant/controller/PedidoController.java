@@ -1,7 +1,6 @@
 package com.gpanta.apiRestaurant.controller;
 
 import com.gpanta.apiRestaurant.dto.CrearPedidoRequest;
-import com.gpanta.apiRestaurant.dto.ItemPedidoDTO;
 import com.gpanta.apiRestaurant.model.Pedido;
 import com.gpanta.apiRestaurant.model.PedidoDetalle;
 import com.gpanta.apiRestaurant.repository.PedidoDetalleRepository;
@@ -32,7 +31,7 @@ public class PedidoController {
     }
 
     @GetMapping("/cocina")
-    @PreAuthorize("hasRole('COCINA')")
+    @PreAuthorize("hasAnyRole('MOZO','ADMIN','COCINA')")
     public List<Pedido> pedidosCocina() {
         return pedidoService.pedidosPorEstado("EN_PREPARACION");
     }
@@ -60,7 +59,6 @@ public class PedidoController {
         return pedidoService.agregarItem(pedidoId, menuItemId, cantidad);
     }
 
-
     @GetMapping("/{pedidoId}/items")
     public List<PedidoDetalle> listarItems(@PathVariable Long pedidoId) {
         return pedidoDetalleRepository.findByPedidoId(pedidoId);
@@ -72,6 +70,11 @@ public class PedidoController {
         return pedidoDetalleRepository.findByPedidoId(pedidoId);
     }
 
+    @PutMapping("/{id}/cerrar")
+    @PreAuthorize("hasAnyRole('MOZO','ADMIN','COCINA')")
+    public Pedido cerrarPedido(@PathVariable Long id) {
+        return pedidoService.cerrarPedido(id);
+    }
 
 
 }
