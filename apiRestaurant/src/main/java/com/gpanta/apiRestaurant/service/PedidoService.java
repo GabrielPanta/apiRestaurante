@@ -34,10 +34,22 @@ public class PedidoService {
     @Autowired
     private MenuItemRepository menuItemRepository;
 
+    @Transactional
     public Pedido crearPedido(CrearPedidoRequest request) {
+
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new RuntimeException("No se puede crear un pedido sin items");
+        }
 
         Mesa mesa = mesaRepository.findById(request.getMesaId())
                 .orElseThrow(() -> new RuntimeException("Mesa no encontrada"));
+
+        if (!"LIBRE".equals(mesa.getEstado())) {
+            throw new RuntimeException("La mesa no está disponible");
+        }
+
+        mesa.setEstado("OCUPADA");
+        mesaRepository.save(mesa);
 
         Pedido pedido = new Pedido();
         pedido.setMesa(mesa);
@@ -50,8 +62,13 @@ public class PedidoService {
         double total = 0;
 
         for (ItemPedidoDTO item : request.getItems()) {
+
             MenuItem menu = menuItemRepository.findById(item.getMenuItemId())
                     .orElseThrow(() -> new RuntimeException("Plato no encontrado"));
+
+            if (item.getCantidad() <= 0) {
+                throw new RuntimeException("Cantidad inválida");
+            }
 
             PedidoDetalle detalle = new PedidoDetalle();
             detalle.setPedido(pedido);
@@ -65,6 +82,7 @@ public class PedidoService {
 
         pedido.setTotal(total);
         pedido.setEstado("EN_PREPARACION");
+
         return pedidoRepository.save(pedido);
     }
 
@@ -90,53 +108,50 @@ public class PedidoService {
                 .orElse(null);
     }
 
- 
-   @Transactional
-   public Pedido agregarItem(Long pedidoId, Long menuItemId, int cantidad) {
+    @Transactional
+    public Pedido agregarItem(Long pedidoId, Long menuItemId, int cantidad) {
 
-       Pedido pedido = pedidoRepository.findById(pedidoId)
-               .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
 
-       MenuItem menu = menuItemRepository.findById(menuItemId)
-               .orElseThrow(() -> new RuntimeException("Plato no encontrado"));
+        MenuItem menu = menuItemRepository.findById(menuItemId)
+                .orElseThrow(() -> new RuntimeException("Plato no encontrado"));
 
-       PedidoDetalle detalle = detalleRepository
-               .findByPedidoIdAndMenuItemId(pedidoId, menuItemId)
-               .orElse(null);
+        PedidoDetalle detalle = detalleRepository
+                .findByPedidoIdAndMenuItemId(pedidoId, menuItemId)
+                .orElse(null);
 
-       if (detalle == null) {
-           detalle = new PedidoDetalle();
-           detalle.setPedido(pedido);
-           detalle.setMenuItem(menu);
-           detalle.setCantidad(cantidad);
-           detalle.setPrecio(menu.getPrecio());
-       } else {
-           detalle.setCantidad(detalle.getCantidad() + cantidad);
-       }
+        if (detalle == null) {
+            detalle = new PedidoDetalle();
+            detalle.setPedido(pedido);
+            detalle.setMenuItem(menu);
+            detalle.setCantidad(cantidad);
+            detalle.setPrecio(menu.getPrecio());
+        } else {
+            detalle.setCantidad(detalle.getCantidad() + cantidad);
+        }
 
-       if (detalle.getCantidad() <= 0) {
-           detalleRepository.delete(detalle);
-       } else {
-           detalleRepository.save(detalle);
-       }
+        if (detalle.getCantidad() <= 0) {
+            detalleRepository.delete(detalle);
+        } else {
+            detalleRepository.save(detalle);
+        }
 
-       recalcularTotal(pedido);
+        recalcularTotal(pedido);
 
-       return pedido;
-   }
+        return pedido;
+    }
 
-   private void recalcularTotal(Pedido pedido) {
-       List<PedidoDetalle> items = detalleRepository.findByPedidoId(pedido.getId());
+    private void recalcularTotal(Pedido pedido) {
+        List<PedidoDetalle> items = detalleRepository.findByPedidoId(pedido.getId());
 
-       double total = items.stream()
-               .mapToDouble(i -> i.getPrecio() * i.getCantidad())
-               .sum();
+        double total = items.stream()
+                .mapToDouble(i -> i.getPrecio() * i.getCantidad())
+                .sum();
 
-       pedido.setTotal(total);
-       pedidoRepository.save(pedido);
-   }
-
-
+        pedido.setTotal(total);
+        pedidoRepository.save(pedido);
+    }
 
     public List<ItemPedidoDTO> listarPorPedido(Long pedidoId) {
         return detalleRepository.findByPedidoId(pedidoId)
@@ -147,7 +162,7 @@ public class PedidoService {
                     dto.setCantidad(detalle.getCantidad());
                     return dto;
                 })
-                .toList();  
+                .toList();
     }
 
     @Transactional
@@ -168,7 +183,6 @@ public class PedidoService {
 
         return pedidoRepository.save(pedido);
     }
-
 
 }
 
