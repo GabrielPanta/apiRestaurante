@@ -2,6 +2,8 @@ package com.gpanta.apiRestaurant.service;
 
 import com.gpanta.apiRestaurant.dto.CrearPedidoRequest;
 import com.gpanta.apiRestaurant.dto.ItemPedidoDTO;
+import com.gpanta.apiRestaurant.model.EstadoMesa;
+import com.gpanta.apiRestaurant.model.EstadoPedido;
 import com.gpanta.apiRestaurant.model.MenuItem;
 import com.gpanta.apiRestaurant.model.Mesa;
 import com.gpanta.apiRestaurant.model.Pedido;
@@ -34,6 +36,7 @@ public class PedidoService {
     @Autowired
     private MenuItemRepository menuItemRepository;
 
+
     @Transactional
     public Pedido crearPedido(CrearPedidoRequest request) {
 
@@ -44,17 +47,17 @@ public class PedidoService {
         Mesa mesa = mesaRepository.findById(request.getMesaId())
                 .orElseThrow(() -> new RuntimeException("Mesa no encontrada"));
 
-        if (!"LIBRE".equals(mesa.getEstado())) {
+        if (mesa.getEstado() != EstadoMesa.LIBRE) {
             throw new RuntimeException("La mesa no está disponible");
         }
 
-        mesa.setEstado("OCUPADA");
+        mesa.setEstado(EstadoMesa.OCUPADA);
         mesaRepository.save(mesa);
 
         Pedido pedido = new Pedido();
         pedido.setMesa(mesa);
         pedido.setFecha(LocalDateTime.now());
-        pedido.setEstado("PENDIENTE");
+        pedido.setEstado(EstadoPedido.PENDIENTE);
         pedido.setTotal(0);
 
         pedido = pedidoRepository.save(pedido);
@@ -81,16 +84,18 @@ public class PedidoService {
         }
 
         pedido.setTotal(total);
-        pedido.setEstado("EN_PREPARACION");
+        pedido.setEstado(EstadoPedido.EN_PREPARACION);
 
         return pedidoRepository.save(pedido);
     }
 
-    public List<Pedido> pedidosPorEstado(String estado) {
+
+    public List<Pedido> pedidosPorEstado(EstadoPedido estado) {
         return pedidoRepository.findByEstado(estado);
     }
 
-    public Pedido cambiarEstado(Long id, String estado) {
+
+    public Pedido cambiarEstado(Long id, EstadoPedido estado) {
         Pedido pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
 
@@ -98,8 +103,14 @@ public class PedidoService {
         return pedidoRepository.save(pedido);
     }
 
+
     public Pedido pedidoActivoPorMesa(Long mesaId) {
-        List<String> estadosActivos = List.of("PENDIENTE", "EN_PREPARACION", "LISTO");
+
+        List<EstadoPedido> estadosActivos = List.of(
+                EstadoPedido.PENDIENTE,
+                EstadoPedido.EN_PREPARACION,
+                EstadoPedido.LISTO
+        );
 
         return pedidoRepository
                 .findByMesaIdAndEstadoIn(mesaId, estadosActivos)
@@ -107,6 +118,7 @@ public class PedidoService {
                 .findFirst()
                 .orElse(null);
     }
+
 
     @Transactional
     public Pedido agregarItem(Long pedidoId, Long menuItemId, int cantidad) {
@@ -142,6 +154,7 @@ public class PedidoService {
         return pedido;
     }
 
+
     private void recalcularTotal(Pedido pedido) {
         List<PedidoDetalle> items = detalleRepository.findByPedidoId(pedido.getId());
 
@@ -152,6 +165,7 @@ public class PedidoService {
         pedido.setTotal(total);
         pedidoRepository.save(pedido);
     }
+
 
     public List<ItemPedidoDTO> listarPorPedido(Long pedidoId) {
         return detalleRepository.findByPedidoId(pedidoId)
@@ -165,24 +179,25 @@ public class PedidoService {
                 .toList();
     }
 
+
     @Transactional
     public Pedido cerrarPedido(Long pedidoId) {
 
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
 
-        if ("CERRADO".equals(pedido.getEstado())) {
+        if (pedido.getEstado() == EstadoPedido.CERRADO) {
             throw new RuntimeException("El pedido ya está cerrado");
         }
 
-        pedido.setEstado("CERRADO");
+        pedido.setEstado(EstadoPedido.CERRADO);
 
         Mesa mesa = pedido.getMesa();
-        mesa.setEstado("LIBRE");
+        mesa.setEstado(EstadoMesa.LIBRE);
         mesaRepository.save(mesa);
 
         return pedidoRepository.save(pedido);
     }
-
 }
+
 

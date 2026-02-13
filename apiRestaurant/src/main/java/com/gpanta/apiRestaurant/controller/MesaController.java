@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.gpanta.apiRestaurant.model.EstadoMesa;
 import com.gpanta.apiRestaurant.model.Mesa;
 import com.gpanta.apiRestaurant.service.MesaService;
 
@@ -38,7 +39,7 @@ public class MesaController {
     @PutMapping("/{id}/estado")
     @PreAuthorize("hasAnyRole('ADMIN','MOZO')")
     public Mesa cambiarEstado(@PathVariable Long id,
-                              @RequestParam String estado) {
+                              @RequestParam EstadoMesa estado) {
         return mesaService.cambiarEstado(id, estado);
     }
 

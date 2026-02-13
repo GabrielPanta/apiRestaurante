@@ -3,6 +3,8 @@ package com.gpanta.apiRestaurant.model;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -12,6 +14,7 @@ import lombok.Data;
 @Entity
 @Data
 public class Pedido {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -21,6 +24,8 @@ public class Pedido {
 
     private LocalDateTime fecha;
 
-    private String estado;
+    @Enumerated(EnumType.STRING)
+    private EstadoPedido estado;
+
     private double total;
 }
