@@ -38,7 +38,7 @@ public class PedidoController {
     }
 
     @PutMapping("/{id}/estado")
-    @PreAuthorize("hasAnyRole('COCINA','CAJERO')")
+    @PreAuthorize("hasAnyRole('COCINA','CAJERO','ADMIN')")
     public Pedido cambiarEstado(@PathVariable Long id,
                                 @RequestParam EstadoPedido estado) {
         return pedidoService.cambiarEstado(id, estado);
@@ -66,7 +66,7 @@ public class PedidoController {
     }
 
     @GetMapping("/{pedidoId}/detalles")
-    @PreAuthorize("hasAnyRole('COCINA','ADMIN')")
+    @PreAuthorize("hasAnyRole('COCINA','ADMIN','MOZO','CAJERO')")
     public List<PedidoDetalle> detalles(@PathVariable Long pedidoId) {
         return pedidoDetalleRepository.findByPedidoId(pedidoId);
     }
@@ -75,6 +75,11 @@ public class PedidoController {
     @PreAuthorize("hasAnyRole('MOZO','ADMIN','COCINA')")
     public Pedido cerrarPedido(@PathVariable Long id) {
         return pedidoService.cerrarPedido(id);
+    }
+
+    @GetMapping("/estado/{estado}")
+    public List<Pedido> porEstado(@PathVariable EstadoPedido estado) {
+        return pedidoService.pedidosPorEstado(estado);
     }
 
 
