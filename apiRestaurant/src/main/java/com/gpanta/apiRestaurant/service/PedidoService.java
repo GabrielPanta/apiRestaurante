@@ -78,6 +78,7 @@ public class PedidoService {
             detalle.setMenuItem(menu);
             detalle.setCantidad(item.getCantidad());
             detalle.setPrecio(menu.getPrecio());
+            detalle.setEstado(EstadoPedido.EN_PREPARACION);
 
             total += menu.getPrecio() * item.getCantidad();
             detalleRepository.save(detalle);
@@ -94,14 +95,22 @@ public class PedidoService {
         return pedidoRepository.findByEstado(estado);
     }
 
-
     public Pedido cambiarEstado(Long id, EstadoPedido estado) {
         Pedido pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
-
         pedido.setEstado(estado);
+
+        // Si el pedido se marca como listo, marcamos todos sus items también
+        if (estado == EstadoPedido.LISTO) {
+            List<PedidoDetalle> items = detalleRepository.findByPedidoId(id);
+            items.forEach(i -> {
+                i.setEstado(EstadoPedido.LISTO);
+                detalleRepository.save(i);
+            });
+        }
         return pedidoRepository.save(pedido);
     }
+
 
 
     public Pedido pedidoActivoPorMesa(Long mesaId) {
@@ -148,6 +157,11 @@ public class PedidoService {
         } else {
             detalleRepository.save(detalle);
         }
+
+        // Al final del método agregarItem, antes del recalcularTotal:
+        detalle.setEstado(EstadoPedido.EN_PREPARACION); // <--- Asegura que el item sea visible
+        detalleRepository.save(detalle);
+
 
         recalcularTotal(pedido);
 
