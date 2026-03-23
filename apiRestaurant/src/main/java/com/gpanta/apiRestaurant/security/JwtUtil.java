@@ -2,6 +2,7 @@ package com.gpanta.apiRestaurant.security;
 
 import java.util.Date;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +14,9 @@ import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtUtil {
-      private final String SECRET_KEY = "clave_super_secreta_restaurante_2025";
+
+    @Value("${jwt.secret}")
+    private String SECRET_KEY;
 
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder()

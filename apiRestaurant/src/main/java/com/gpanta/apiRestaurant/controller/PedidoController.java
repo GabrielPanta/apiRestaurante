@@ -6,7 +6,6 @@ import com.gpanta.apiRestaurant.model.Pedido;
 import com.gpanta.apiRestaurant.model.PedidoDetalle;
 import com.gpanta.apiRestaurant.repository.PedidoDetalleRepository;
 import com.gpanta.apiRestaurant.service.PedidoService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,12 +15,12 @@ import java.util.List;
 @RequestMapping("/pedidos")
 public class PedidoController {
 
+    private final PedidoService pedidoService;
     private final PedidoDetalleRepository pedidoDetalleRepository;
 
-    @Autowired
-    private PedidoService pedidoService;
-
-    PedidoController(PedidoDetalleRepository pedidoDetalleRepository) {
+    
+    public PedidoController(PedidoService pedidoService, PedidoDetalleRepository pedidoDetalleRepository) {
+        this.pedidoService = pedidoService;
         this.pedidoDetalleRepository = pedidoDetalleRepository;
     }
 

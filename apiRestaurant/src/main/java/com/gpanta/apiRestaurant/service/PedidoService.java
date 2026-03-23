@@ -13,6 +13,7 @@ import com.gpanta.apiRestaurant.repository.MesaRepository;
 import com.gpanta.apiRestaurant.repository.PedidoDetalleRepository;
 import com.gpanta.apiRestaurant.repository.PedidoRepository;
 
+import com.gpanta.apiRestaurant.exception.BusinessException;
 import jakarta.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,7 @@ public class PedidoService {
                 .orElseThrow(() -> new RuntimeException("Mesa no encontrada"));
 
         if (mesa.getEstado() != EstadoMesa.LIBRE) {
-            throw new RuntimeException("La mesa no está disponible");
+            throw new BusinessException("La mesa no está disponible");
         }
 
         mesa.setEstado(EstadoMesa.OCUPADA);
@@ -69,8 +70,12 @@ public class PedidoService {
             MenuItem menu = menuItemRepository.findById(item.getMenuItemId())
                     .orElseThrow(() -> new RuntimeException("Plato no encontrado"));
 
+            if (!menu.isDisponible()) {
+                throw new BusinessException("El plato " + menu.getNombre() + " no está disponible");
+            }
+
             if (item.getCantidad() <= 0) {
-                throw new RuntimeException("Cantidad inválida");
+                throw new BusinessException("Cantidad inválida");
             }
 
             PedidoDetalle detalle = new PedidoDetalle();
@@ -133,10 +138,14 @@ public class PedidoService {
     public Pedido agregarItem(Long pedidoId, Long menuItemId, int cantidad) {
 
         Pedido pedido = pedidoRepository.findById(pedidoId)
-                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+                .orElseThrow(() -> new BusinessException("Pedido no encontrado"));
 
         MenuItem menu = menuItemRepository.findById(menuItemId)
-                .orElseThrow(() -> new RuntimeException("Plato no encontrado"));
+                .orElseThrow(() -> new BusinessException("Plato no encontrado"));
+
+        if (!menu.isDisponible()) {
+            throw new BusinessException("El plato no está disponible");
+        }
 
         PedidoDetalle detalle = detalleRepository
                 .findByPedidoIdAndMenuItemId(pedidoId, menuItemId)
@@ -155,13 +164,15 @@ public class PedidoService {
         if (detalle.getCantidad() <= 0) {
             detalleRepository.delete(detalle);
         } else {
+            // Asegura que el item sea visible para cocina
+            detalle.setEstado(EstadoPedido.EN_PREPARACION); 
             detalleRepository.save(detalle);
         }
 
-        // Al final del método agregarItem, antes del recalcularTotal:
-        detalle.setEstado(EstadoPedido.EN_PREPARACION); // <--- Asegura que el item sea visible
-        detalleRepository.save(detalle);
-
+        // Si el pedido estaba LISTO, vuelve a EN_PREPARACION al añadir items
+        if (pedido.getEstado() == EstadoPedido.LISTO) {
+            pedido.setEstado(EstadoPedido.EN_PREPARACION);
+        }
 
         recalcularTotal(pedido);
 
