@@ -83,14 +83,15 @@ public class PedidoService {
             detalle.setMenuItem(menu);
             detalle.setCantidad(item.getCantidad());
             detalle.setPrecio(menu.getPrecio());
-            detalle.setEstado(EstadoPedido.EN_PREPARACION);
+            detalle.setEstado(EstadoPedido.PENDIENTE);
+            detalle.setNotas(item.getNotas());
 
             total += menu.getPrecio() * item.getCantidad();
             detalleRepository.save(detalle);
         }
 
         pedido.setTotal(total);
-        pedido.setEstado(EstadoPedido.EN_PREPARACION);
+        pedido.setEstado(EstadoPedido.PENDIENTE);
 
         return pedidoRepository.save(pedido);
     }
@@ -105,14 +106,13 @@ public class PedidoService {
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
         pedido.setEstado(estado);
 
-        // Si el pedido se marca como listo, marcamos todos sus items también
-        if (estado == EstadoPedido.LISTO) {
-            List<PedidoDetalle> items = detalleRepository.findByPedidoId(id);
-            items.forEach(i -> {
-                i.setEstado(EstadoPedido.LISTO);
-                detalleRepository.save(i);
-            });
-        }
+        // Sincronizar el estado de todos los items del pedido
+        List<PedidoDetalle> items = detalleRepository.findByPedidoId(id);
+        items.forEach(i -> {
+            i.setEstado(estado);
+            detalleRepository.save(i);
+        });
+
         return pedidoRepository.save(pedido);
     }
 
@@ -136,6 +136,11 @@ public class PedidoService {
 
     @Transactional
     public Pedido agregarItem(Long pedidoId, Long menuItemId, int cantidad) {
+        return agregarItem(pedidoId, menuItemId, cantidad, null);
+    }
+
+    @Transactional
+    public Pedido agregarItem(Long pedidoId, Long menuItemId, int cantidad, String notas) {
 
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new BusinessException("Pedido no encontrado"));
@@ -157,15 +162,18 @@ public class PedidoService {
             detalle.setMenuItem(menu);
             detalle.setCantidad(cantidad);
             detalle.setPrecio(menu.getPrecio());
+            detalle.setNotas(notas);
         } else {
             detalle.setCantidad(detalle.getCantidad() + cantidad);
+            if (notas != null && !notas.isBlank()) {
+                detalle.setNotas(notas);
+            }
         }
 
         if (detalle.getCantidad() <= 0) {
             detalleRepository.delete(detalle);
         } else {
-            // Asegura que el item sea visible para cocina
-            detalle.setEstado(EstadoPedido.EN_PREPARACION); 
+            detalle.setEstado(pedido.getEstado()); 
             detalleRepository.save(detalle);
         }
 
@@ -177,6 +185,14 @@ public class PedidoService {
         recalcularTotal(pedido);
 
         return pedido;
+    }
+
+    @Transactional
+    public PedidoDetalle actualizarNotas(Long detalleId, String notas) {
+        PedidoDetalle detalle = detalleRepository.findById(detalleId)
+                .orElseThrow(() -> new BusinessException("Detalle no encontrado"));
+        detalle.setNotas(notas);
+        return detalleRepository.save(detalle);
     }
 
 
@@ -199,6 +215,7 @@ public class PedidoService {
                     ItemPedidoDTO dto = new ItemPedidoDTO();
                     dto.setMenuItemId(detalle.getMenuItem().getId());
                     dto.setCantidad(detalle.getCantidad());
+                    dto.setNotas(detalle.getNotas());
                     return dto;
                 })
                 .toList();

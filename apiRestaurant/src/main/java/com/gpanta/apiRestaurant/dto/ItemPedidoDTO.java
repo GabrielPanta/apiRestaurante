@@ -6,4 +6,5 @@ import lombok.Data;
 public class ItemPedidoDTO {
     private Long menuItemId;
     private int cantidad;
+    private String notas;
 }

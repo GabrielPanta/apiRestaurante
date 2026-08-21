@@ -27,6 +27,8 @@ public class PedidoDetalle {
     private double precio;
     
     @Enumerated(EnumType.STRING)
-    private EstadoPedido estado; // <--- Añadir esto
+    private EstadoPedido estado;
+
+    private String notas;
 }
 

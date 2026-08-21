@@ -54,9 +54,18 @@ public class PedidoController {
     public Pedido agregarItem(
             @PathVariable Long pedidoId,
             @RequestParam Long menuItemId,
-            @RequestParam int cantidad) {
+            @RequestParam int cantidad,
+            @RequestParam(required = false) String notas) {
 
-        return pedidoService.agregarItem(pedidoId, menuItemId, cantidad);
+        return pedidoService.agregarItem(pedidoId, menuItemId, cantidad, notas);
+    }
+
+    @PutMapping("/detalles/{detalleId}/notas")
+    @PreAuthorize("hasAnyRole('MOZO','ADMIN')")
+    public PedidoDetalle actualizarNotas(
+            @PathVariable Long detalleId,
+            @RequestBody(required = false) String notas) {
+        return pedidoService.actualizarNotas(detalleId, notas != null ? notas.trim() : "");
     }
 
     @GetMapping("/{pedidoId}/items")
