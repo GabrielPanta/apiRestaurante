@@ -22,4 +22,13 @@ public interface PedidoDetalleRepository extends JpaRepository<PedidoDetalle, Lo
             ORDER BY SUM(pd.cantidad) DESC
             """)
     List<Object[]> productosMasVendidos(@Param("estado") EstadoPedido estado);
+
+    @Query("""
+            SELECT pd.menuItem.nombre, SUM(pd.cantidad)
+            FROM PedidoDetalle pd
+            WHERE pd.pedido.fecha >= :inicio AND pd.pedido.fecha <= :fin AND pd.pedido.estado = :estado
+            GROUP BY pd.menuItem.nombre
+            ORDER BY SUM(pd.cantidad) DESC
+            """)
+    List<Object[]> productosMasVendidosEnRango(@Param("inicio") java.time.LocalDateTime inicio, @Param("fin") java.time.LocalDateTime fin, @Param("estado") EstadoPedido estado);
 }

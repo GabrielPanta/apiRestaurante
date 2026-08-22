@@ -21,4 +21,7 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     @Query("SELECT COUNT(p) FROM Pedido p WHERE p.fecha >= :inicio AND p.fecha <= :fin AND p.estado = :estado")
     Long cantidadPedidosEnRango(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin, @Param("estado") EstadoPedido estado);
+
+    @Query("SELECT p FROM Pedido p WHERE p.fecha >= :inicio AND p.fecha <= :fin AND p.estado = :estado ORDER BY p.fecha ASC")
+    List<Pedido> pedidosCerradosEnRango(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin, @Param("estado") EstadoPedido estado);
 }
